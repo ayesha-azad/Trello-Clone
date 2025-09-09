@@ -10,8 +10,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useBoards } from "@/lib/hooks/useBoards";
+import { Board } from "@/lib/supabase/models";
 import { useUser } from "@clerk/nextjs";
 import {
   ChartLine,
@@ -25,18 +33,71 @@ import {
   Trello,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { act, useState } from "react";
 
 export default function DashboardPage() {
   const { user } = useUser();
   const { createBoard, boards, loading, error } = useBoards();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+  const [filters, setFilters] = useState({
+    search: "",
+    dateRange: {
+      start: null as string | null,
+      end: null as string | null,
+    },
+    taskCount: {
+      min: null as number | null,
+      max: null as number | null,
+    },
+  });
+
+  function clearFilters() {
+    setFilters({
+      search: "",
+      dateRange: {
+        start: null as string | null,
+        end: null as string | null,
+      },
+      taskCount: {
+        min: null as number | null,
+        max: null as number | null,
+      },
+    });
+  }
 
   const handleCreateBoard = async () => {
     await createBoard({
       title: "New Board",
     });
   };
+
+  const filteredBoards = boards.filter((board: Board) => {
+    const taskCount = board.totalTasks ?? 0;
+    const matchesSearch = board.title
+      .toLowerCase()
+      .includes(filters.search.toLowerCase());
+
+    const matchesDateRange =
+      (!filters.dateRange.start ||
+        new Date(board.created_at) >= new Date(filters.dateRange.start)) &&
+      (!filters.dateRange.end ||
+        new Date(board.created_at) <= new Date(filters.dateRange.end));
+
+    const matchesTaskCount =
+      (!filters.taskCount.min || taskCount >= filters.taskCount.min) &&
+      (!filters.taskCount.max || taskCount <= filters.taskCount.max);
+
+    return matchesSearch && matchesDateRange && matchesTaskCount;
+  });
+
+  const activeFilterCount = [
+    filters.search ? 1 : 0,
+    filters.dateRange.start ? 1 : 0,
+    filters.dateRange.end ? 1 : 0,
+    filters.taskCount.min !== null ? 1 : 0,
+    filters.taskCount.max !== null ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
 
   if (loading) {
     return (
@@ -54,7 +115,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -180,9 +240,15 @@ export default function DashboardPage() {
                   <List />
                 </Button>
               </div>
-              <Button variant="outline" size="lg" className="py-5">
+              <Button
+                variant="outline"
+                size="lg"
+                className="py-5 cursor-pointer"
+                onClick={() => setIsFilterOpen(true)}
+              >
                 <Filter />
                 Filter
+                {activeFilterCount > 0 && <Badge variant={'outline'}>{activeFilterCount}</Badge>}
               </Button>
               <Button onClick={handleCreateBoard} className="py-5">
                 <Plus />
@@ -202,11 +268,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Boards Grids/List */}
-          {boards.length === 0 ? (
+          {filteredBoards.length === 0 ? (
             <div>No boards yet</div>
           ) : viewMode === "grid" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {boards.map((board, key) => (
+              {filteredBoards.map((board, key) => (
                 <Link href={`/boards/${board.id}`} key={key}>
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
                     <CardHeader className="pb-3">
@@ -249,7 +315,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div>
-              {boards.map((board, key) => (
+              {filteredBoards.map((board, key) => (
                 <div key={key} className={key > 0 ? "mt-4" : ""}>
                   <Link href={`/boards/${board.id}`}>
                     <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
@@ -295,6 +361,125 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+
+      {/* Filter Dialog */}
+      <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <DialogContent className="w-[95vw] max-w-[425px] mx-auto">
+          <DialogHeader>
+            <DialogTitle>Filter Boards</DialogTitle>
+            <p className="text-sm text-gray-600">
+              Filter boards by title, date, or task count.
+            </p>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Search</Label>
+              <Input
+                id="search"
+                placeholder="Search board titles..."
+                value={filters.search}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, search: e.target.value }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Date Range</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Start Date</Label>
+                  <Input
+                    type="date"
+                    value={filters.dateRange.start ?? ""}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        dateRange: {
+                          ...prev.dateRange,
+                          start: e.target.value || null,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">End Date</Label>
+                  <Input
+                    type="date"
+                    value={filters.dateRange.end ?? ""}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        dateRange: {
+                          ...prev.dateRange,
+                          end: e.target.value || null,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Task Count</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Minimum</Label>
+                  <Input
+                    value={filters.taskCount.min ?? ""}
+                    type="number"
+                    min="0"
+                    placeholder="Min tasks"
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        taskCount: {
+                          ...prev.taskCount,
+                          min: e.target.value ? Number(e.target.value) : null,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Maximum</Label>
+                  <Input
+                    value={filters.taskCount.max ?? ""}
+                    type="number"
+                    min="0"
+                    placeholder="Max tasks"
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        taskCount: {
+                          ...prev.taskCount,
+                          max: e.target.value ? Number(e.target.value) : null,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-between pt-4 space-y-2 sm:space-y-0 sm:space-x-2">
+              <Button
+                variant="outline"
+                className="cursor-pointer"
+                onClick={clearFilters}
+              >
+                Clear Filters
+              </Button>
+              <Button
+                onClick={() => setIsFilterOpen(false)}
+                className="cursor-pointer"
+              >
+                Apply Filters
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

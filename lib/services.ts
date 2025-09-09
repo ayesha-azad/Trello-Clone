@@ -17,13 +17,32 @@ export const boardService = {
   async getBoards(supabase: SupabaseClient, userId: string): Promise<Board[]> {
     const { data, error } = await supabase
       .from("boards")
-      .select("*")
+      .select(
+        `
+        *,
+        columns (
+          tasks ( count )
+        )
+      `
+      )
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    return data || [];
+    return (data || []).map((board: any) => {
+      const totalTasks =
+        board.columns?.reduce(
+          (sum: number, col: any) => sum + (col.tasks?.[0]?.count || 0),
+          0
+        ) || 0;
+
+      const { columns, ...boardWithoutColumns } = board;
+      return {
+        ...boardWithoutColumns,
+        totalTasks,
+      };
+    });
   },
 
   async createBoard(
@@ -120,7 +139,8 @@ export const taskService = {
         `
       )
       .eq("columns.board_id", boardId)
-      .order("sort_order", { ascending: true });
+      .order("sort_order", { ascending: true })
+      .order("updated_at", { ascending: false });
 
     if (error) throw error;
 
@@ -153,6 +173,7 @@ export const taskService = {
       .update({
         column_id: newColumnId,
         sort_order: newOrder,
+        updated_at: new Date().toISOString(),
       })
       .eq("id", taskId);
 
