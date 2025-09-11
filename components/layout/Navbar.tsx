@@ -13,12 +13,14 @@ import { Button } from "../ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Badge } from "../ui/badge";
+import { cn } from "@/lib/utils";
 
 interface NavbarProps {
   boardTitle?: string;
   onEditBoard?: () => void;
   onFilterClick?: () => void;
   filterCount?: number;
+  className?: string;
 }
 
 const Navbar = ({
@@ -26,6 +28,7 @@ const Navbar = ({
   onEditBoard,
   onFilterClick,
   filterCount,
+  className,
 }: NavbarProps) => {
   const { isSignedIn, user } = useUser();
   const pathname = usePathname();
@@ -138,7 +141,11 @@ const Navbar = ({
   }
 
   return (
-    <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+    <header
+      className={cn(
+        "border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50",className
+      )}
+    >
       <div className="container mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Trello className="h-6 w-6 sm:w-8 sm:h-8 text-blue-600" />
