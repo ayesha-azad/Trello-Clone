@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { usePlan } from "@/lib/contexts/PlanContext";
 import { useBoards } from "@/lib/hooks/useBoards";
 import { Board } from "@/lib/supabase/models";
 import { useUser } from "@clerk/nextjs";
@@ -33,13 +34,17 @@ import {
   Trello,
 } from "lucide-react";
 import Link from "next/link";
-import { act, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user } = useUser();
   const { createBoard, boards, loading, error } = useBoards();
+  const { isFreeUser } = usePlan();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState<boolean>(false);
   const [filters, setFilters] = useState({
     search: "",
     dateRange: {
@@ -51,6 +56,8 @@ export default function DashboardPage() {
       max: null as number | null,
     },
   });
+
+  const canCreateBoard = !isFreeUser || boards.length < 1;
 
   function clearFilters() {
     setFilters({
@@ -67,6 +74,11 @@ export default function DashboardPage() {
   }
 
   const handleCreateBoard = async () => {
+    console.log("canCreateBoard", canCreateBoard);
+    if (!canCreateBoard) {
+      setShowUpgradeDialog(true);
+      return;
+    }
     await createBoard({
       title: "New Board",
     });
@@ -220,6 +232,11 @@ export default function DashboardPage() {
                 Your Boards
               </h2>
               <p className="text-gray-600">Manage your projects and tasks</p>
+              {isFreeUser && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Free Plan: {boards.length}/1 boards used
+                </p>
+              )}
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-x-0 sm:space-x-2 space-y-2 sm:space-y-0">
               <div className="flex items-center space-x-2 bg-white border p-1 rounded-md">
@@ -248,7 +265,9 @@ export default function DashboardPage() {
               >
                 <Filter />
                 Filter
-                {activeFilterCount > 0 && <Badge variant={'outline'}>{activeFilterCount}</Badge>}
+                {activeFilterCount > 0 && (
+                  <Badge variant={"outline"}>{activeFilterCount}</Badge>
+                )}
               </Button>
               <Button onClick={handleCreateBoard} className="py-5">
                 <Plus />
@@ -304,7 +323,10 @@ export default function DashboardPage() {
                   </Card>
                 </Link>
               ))}
-              <Card className="border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer group">
+              <Card
+                className="border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer group"
+                onClick={handleCreateBoard}
+              >
                 <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center h-full min-h-[150px] box-border">
                   <Plus className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 group-hover:text-blue-600 mb-2" />
                   <p className="text-sm sm:text-base text-gray-600 font-medium group-hover:text-blue-600">
@@ -349,7 +371,10 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ))}
-              <Card className="mt-4 border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer group">
+              <Card
+                className="mt-4 border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer group"
+                onClick={handleCreateBoard}
+              >
                 <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center h-full min-h-[200px]">
                   <Plus className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 group-hover:text-blue-600 mb-2" />
                   <p className="text-sm sm:text-base text-gray-600 font-medium group-hover:text-blue-600">
@@ -477,6 +502,34 @@ export default function DashboardPage() {
                 Apply Filters
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* upgrade Dialog */}
+      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <DialogContent className="w-[95vw] max-w-[425px] mx-auto">
+          <DialogHeader>
+            <DialogTitle>Upgrade to Create More Boards</DialogTitle>
+            <p className="text-sm text-gray-600">
+              Free users can only create one board. Upgrade to Pro or Enterprise
+              to create unlimited boards.
+            </p>
+          </DialogHeader>
+          <div className="flex justify-end space-x-4 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowUpgradeDialog(false)}
+              className="cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => router.push("/pricing")}
+              className="cursor-pointer"
+            >
+              View Plans
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
