@@ -23,7 +23,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useBoard } from "@/lib/hooks/useBoards";
 import { ColumnWithTasks, Task } from "@/lib/supabase/models";
-import { Calendar, MoreHorizontal, Plus, User } from "lucide-react";
+import { Calendar, MoreHorizontal, Plus, Trash2, User } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import {
@@ -51,11 +51,13 @@ function DroppableColumn({
   children,
   onCreateTask,
   onEditColumn,
+  onDeleteColumn,
 }: {
   column: ColumnWithTasks;
   children: React.ReactNode;
   onCreateTask: (task: any) => Promise<void>;
   onEditColumn: (column: ColumnWithTasks) => void;
+  onDeleteColumn: (columnId: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   return (
@@ -81,14 +83,24 @@ function DroppableColumn({
                 {column.tasks.length}
               </Badge>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-shrink-0 cursor-pointer"
-              onClick={() => onEditColumn(column)}
-            >
-              <MoreHorizontal />
-            </Button>
+            <div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-shrink-0 cursor-pointer"
+                onClick={() => onDeleteColumn(column.id)}
+              >
+                <Trash2 className="text-red-400" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-shrink-0 cursor-pointer"
+                onClick={() => onEditColumn(column)}
+              >
+                <MoreHorizontal />
+              </Button>
+            </div>
           </div>
         </div>
         {/* Column Content */}
@@ -166,6 +178,7 @@ function DroppableColumn({
                   <Label>Due Date</Label>
                   <Input type="date" name="dueDate" id="dueDate" />
                 </div>
+                <input type="hidden" name="columnId" value={column.id} />
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button type="submit">Create Task</Button>
                 </div>
@@ -178,7 +191,13 @@ function DroppableColumn({
   );
 }
 
-const SortableTask = ({ task }: { task: Task }) => {
+const SortableTask = ({
+  task,
+  onDeleteTask,
+}: {
+  task: Task;
+  onDeleteTask: (taskId: string) => void;
+}) => {
   const {
     attributes,
     listeners,
@@ -215,6 +234,12 @@ const SortableTask = ({ task }: { task: Task }) => {
               <h4 className="font-medium text-gray-900 text-sm leading-tight flex-1 min-w-0 pr-2">
                 {task.title}
               </h4>
+              <div
+                className="p-1.5 hover:bg-gray-100 rounded-md group"
+                onClick={() => onDeleteTask(task.id)}
+              >
+                <Trash2 className="text-red-400 cursor-pointer group-hover:text-red-500 w-[15px] h-[15px]" />
+              </div>
             </div>
             <p className="text-xs text-gray-600 line-clamp-2">
               {task.description || "No description"}
@@ -312,6 +337,8 @@ export default function BoardPage() {
     moveTask,
     createColumn,
     updateColumn,
+    deleteRealTask,
+    deleteRealColumn,
   } = useBoard(id);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -326,6 +353,11 @@ export default function BoardPage() {
   const [editingColumn, setEditingColumn] = useState<ColumnWithTasks | null>(
     null
   );
+  const [isDeletingTask, setIsDeletingTask] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+  const [isDeletingColumn, setIsDeletingColumn] = useState(false);
+  const [deletingColumnId, setDeletingColumnId] = useState<string | null>(null);
+
   const [filters, setFilters] = useState({
     priority: [] as string[],
     assignee: [] as string[],
@@ -373,18 +405,21 @@ export default function BoardPage() {
     }
   };
 
-  const createTask = async (taskData: {
-    title: string;
-    description?: string;
-    assignee?: string;
-    priority: "low" | "medium" | "high";
-    dueDate?: string;
-  }) => {
-    const targetColumn = columns[0];
+  const createTask = async (
+    taskData: {
+      title: string;
+      description?: string;
+      assignee?: string;
+      priority: "low" | "medium" | "high";
+      dueDate?: string;
+    },
+    columnId?: string
+  ) => {
+    const targetColumn = columnId ? columnId : columns[0].id;
     if (!targetColumn) {
       throw new Error("No column found");
     }
-    await createRealTask(targetColumn.id, taskData);
+    await createRealTask(targetColumn, taskData);
   };
 
   const handleCreateTask = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -397,8 +432,9 @@ export default function BoardPage() {
       priority: formData.get("priority") as "low" | "medium" | "high",
       dueDate: formData.get("dueDate") as string | undefined,
     };
+    const columnId = formData.get("columnId") as string;
     if (taskData.title.trim()) {
-      await createTask(taskData);
+      await createTask(taskData, columnId);
       const trigger = document.querySelector(
         '[data-state="open"]'
       ) as HTMLElement;
@@ -486,6 +522,30 @@ export default function BoardPage() {
     setIsEditingColumn(true);
     setEditingColumn(column);
     setEditingColumnTitle(column.title);
+  };
+
+  const requestDeleteTask = (taskId: string) => {
+    setDeletingTaskId(taskId);
+    setIsDeletingTask(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!deletingTaskId) return;
+    await deleteRealTask(deletingTaskId);
+    setIsDeletingTask(false);
+    setDeletingTaskId(null);
+  };
+
+  const requestDeleteColumn = (columnId: string) => {
+    setDeletingColumnId(columnId);
+    setIsDeletingColumn(true);
+  };
+
+  const confirmDeleteColumn = async () => {
+    if (!deletingColumnId) return;
+    await deleteRealColumn(deletingColumnId);
+    setIsDeletingColumn(false);
+    setDeletingColumnId(null);
   };
 
   const filteredColumns = columns.map((column) => ({
@@ -677,82 +737,92 @@ export default function BoardPage() {
                 {columns.reduce((sum, column) => sum + column.tasks.length, 0)}
               </div>
             </div>
-            {/* Add Task Dialog */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="cursor-pointer w-full sm:w-auto">
-                  <Plus />
-                  Add Task
-                </Button>
-              </DialogTrigger>
-              <DialogContent
-                className="w-[95vw] max-w-[425px] mx-auto"
-                onOpenAutoFocus={(e) => e.preventDefault()}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className=" text-gray-500 hover:text-gray-700 cursor-pointer"
+                onClick={() => setIsCreatingColumn(true)}
               >
-                <DialogHeader>
-                  <DialogTitle>Create New Task</DialogTitle>
-                  <p className="text-sm text-gray-600">
-                    Add a new task to the board
-                  </p>
-                </DialogHeader>
-                <form className="space-y-4" onSubmit={handleCreateTask}>
-                  <div className="space-y-2">
-                    <label>Title *</label>
-                    <Input
-                      id="title"
-                      name="title"
-                      placeholder="Enter task title"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                      id="description"
-                      name="description"
-                      placeholder="Enter task description"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label>Assignee</label>
-                    <Input
-                      id="assignee"
-                      name="assignee"
-                      placeholder="Who should do this?"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Select name="priority" defaultValue="medium">
-                      <SelectTrigger className="w-full cursor-pointer">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["low", "medium", "high"].map((priority, key) => (
-                          <SelectItem
-                            key={key}
-                            value={priority}
-                            className="cursor-pointer"
-                          >
-                            {priority.charAt(0).toUpperCase() +
-                              priority.slice(1)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Due Date</Label>
-                    <Input type="date" name="dueDate" id="dueDate" />
-                  </div>
-                  <div className="flex justify-end space-x-2 pt-4">
-                    <Button type="submit">Create Task</Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                <Plus />
+                Add New List
+              </Button>
+              {/* Add Task Dialog */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="cursor-pointer w-auto">
+                    <Plus />
+                    Add Task
+                  </Button>
+                </DialogTrigger>
+                <DialogContent
+                  className="w-[95vw] max-w-[425px] mx-auto"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                >
+                  <DialogHeader>
+                    <DialogTitle>Create New Task</DialogTitle>
+                    <p className="text-sm text-gray-600">
+                      Add a new task to the board
+                    </p>
+                  </DialogHeader>
+                  <form className="space-y-4" onSubmit={handleCreateTask}>
+                    <div className="space-y-2">
+                      <label>Title *</label>
+                      <Input
+                        id="title"
+                        name="title"
+                        placeholder="Enter task title"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea
+                        id="description"
+                        name="description"
+                        placeholder="Enter task description"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label>Assignee</label>
+                      <Input
+                        id="assignee"
+                        name="assignee"
+                        placeholder="Who should do this?"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Priority</Label>
+                      <Select name="priority" defaultValue="medium">
+                        <SelectTrigger className="w-full cursor-pointer">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["low", "medium", "high"].map((priority, key) => (
+                            <SelectItem
+                              key={key}
+                              value={priority}
+                              className="cursor-pointer"
+                            >
+                              {priority.charAt(0).toUpperCase() +
+                                priority.slice(1)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Due Date</Label>
+                      <Input type="date" name="dueDate" id="dueDate" />
+                    </div>
+                    <div className="flex justify-end space-x-2 pt-4">
+                      <Button type="submit">Create Task</Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {/* Board Columns */}
@@ -776,6 +846,7 @@ export default function BoardPage() {
                   column={column}
                   onCreateTask={handleCreateTask}
                   onEditColumn={handleEditColumn}
+                  onDeleteColumn={requestDeleteColumn}
                 >
                   <SortableContext
                     items={column.tasks.map((task) => task.id)}
@@ -783,7 +854,11 @@ export default function BoardPage() {
                   >
                     <div className="space-y-3">
                       {column.tasks.map((task, key) => (
-                        <SortableTask key={key} task={task} />
+                        <SortableTask
+                          key={key}
+                          task={task}
+                          onDeleteTask={requestDeleteTask}
+                        />
                       ))}
                     </div>
                   </SortableContext>
@@ -885,6 +960,66 @@ export default function BoardPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeletingTask} onOpenChange={setIsDeletingTask}>
+        <DialogContent
+          className="w-[95vw] max-w-[425px] mx-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Delete Task</DialogTitle>
+            <p className="text-sm text-gray-600">
+              Are you sure you want to delete this task?
+            </p>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => setIsDeletingTask(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="cursor-pointer"
+              onClick={confirmDeleteTask}
+            >
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeletingColumn} onOpenChange={setIsDeletingColumn}>
+        <DialogContent
+          className="w-[95vw] max-w-[425px] mx-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Delete Column</DialogTitle>
+            <p className="text-sm text-gray-600">
+              Are you sure you want to delete this column?
+            </p>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => setIsDeletingColumn(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="cursor-pointer"
+              onClick={confirmDeleteColumn}
+            >
+              Delete
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>

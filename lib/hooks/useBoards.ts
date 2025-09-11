@@ -138,7 +138,7 @@ export function useBoard(boardId: string) {
 
       setColumns((prev) =>
         prev.map((col) =>
-          col.id === columnId ? { ...col, tasks: [...col.tasks, newTask] } : col
+          col.id == columnId ? { ...col, tasks: [...col.tasks, newTask] } : col
         )
       );
 
@@ -229,6 +229,33 @@ export function useBoard(boardId: string) {
     }
   }
 
+  async function deleteRealTask(taskId: string) {
+    const prevColumns = structuredClone(columns);
+    try {
+      setColumns((prev) =>
+        prev.map((col) => ({
+          ...col,
+          tasks: col.tasks.filter((t) => t.id !== taskId),
+        }))
+      );
+      await taskService.deleteTask(supabase!, taskId);
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+      setColumns(prevColumns);
+    }
+  }
+
+  async function deleteRealColumn(columnId: string) {
+    const prevColumns = structuredClone(columns);
+    try {
+      setColumns((prev) => prev.filter((c) => c.id !== columnId));
+      await columnService.deleteColumn(supabase!, columnId);
+    } catch (err) {
+      console.error("Failed to delete column:", err);
+      setColumns(prevColumns);
+    }
+  }
+
   return {
     board,
     columns,
@@ -240,5 +267,7 @@ export function useBoard(boardId: string) {
     moveTask,
     createColumn,
     updateColumn,
+    deleteRealTask,
+    deleteRealColumn,
   };
 }
