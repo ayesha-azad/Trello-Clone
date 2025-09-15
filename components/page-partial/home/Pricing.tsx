@@ -19,7 +19,7 @@ export default function Pricing() {
             Simple, transparent pricing
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose the plan that's right for your team. Upgrade or downgrade at
+            Choose the plan right for your team. Upgrade or downgrade at
             any time.
           </p>
         </div>

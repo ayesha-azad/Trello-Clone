@@ -23,8 +23,8 @@ export default function NotFoundPagePartial() {
               Oops! Page not found
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              The page you're looking for seems to have wandered off into the
-              digital void. Don't worry, even the best project managers lose
+              The page you are looking for seems to have wandered off into the
+              digital void. Don&apos;t worry, even the best project managers lose
               track of things sometimes!
             </p>
           </div>
@@ -82,7 +82,7 @@ export default function NotFoundPagePartial() {
           </Card>
           <div className="mt-12">
             <p className="text-sm text-gray-500 italic">
-              "The best way to find something is to stop looking for it."
+              &ldquo;The best way to find something is to stop looking for it.&rdquo;
               <br />
               <span className="text-xs">
                 — Someone who probably never used a project management tool
