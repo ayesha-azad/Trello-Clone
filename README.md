@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trello Clone - Next.js
 
-## Getting Started
+A modern project management tool inspired by Trello, built with Next.js, Supabase, and Clerk. This full-stack application provides a comprehensive board experience with drag-and-drop functionality, real-time collaboration, and subscription-based features.
 
-First, run the development server:
+## Demo
+
+- Live Preview: [https://trello-clone-by-shan.vercel.app]
+
+## Features
+
+### Core Functionality
+- **Kanban Board Management**: Create, edit, and organize boards with customizable colors and titles
+- **Drag & Drop Interface**: Intuitive task management with smooth drag-and-drop using @dnd-kit
+- **Column Management**: Create, edit, and delete columns to organize your workflow
+- **Task Management**: Add tasks with titles, descriptions, assignees, priorities, and due dates
+- **Real-time Updates**: Live synchronization of board changes across sessions
+
+### User Experience
+- **Modern Authentication**: Secure sign-in/sign-up with Clerk integration
+- **Responsive Design**: Beautiful UI built with Tailwind CSS and Shadcn UI components
+- **Dashboard Overview**: Centralized view of all your boards with statistics
+- **Advanced Filtering**: Filter tasks by priority, assignee, and due dates
+- **Search Functionality**: Quick search across boards and tasks
+
+### Subscription Features
+- **Free Tier**: Limited to 1 board for free users
+- **Premium Plans**: Unlimited boards and advanced features via Clerk's pricing integration
+- **Upgrade Prompts**: Seamless upgrade flow for free users
+
+### Technical Features
+- **TypeScript**: Full type safety throughout the application
+- **Server-Side Rendering**: Optimized performance with Next.js 15
+- **Database Integration**: Supabase for real-time data management
+- **Component Architecture**: Modular, reusable components with feature-based organization
+
+## Screenshots
+
+![Home](https://i.ibb.co/b5HDBpvn/trello-clone-home.png)
+- Modern landing page with feature highlights
+
+![Sign In](https://i.ibb.co/q3Bz3kZr/trello-clone-login.png)
+- Secure sign-in interface with Clerk
+
+![Sign Up](https://i.ibb.co/HTGNY3gj/trello-clone-signup.png)
+- User registration with Clerk
+
+![Dashboard](https://i.ibb.co/d03BSbpJ/trello-clone-dashboard.png)
+- User dashboard with board overview and statistics
+
+![Filters](https://i.ibb.co/wFYcksCm/trello-clone-filters.png)
+- Filter Dropdown on Dashboard Page
+
+![Board](https://i.ibb.co/sJK02cFR/trello-clone-edit-board.png)
+- Interactive kanban board with drag-and-drop functionality
+
+![Pricing](https://i.ibb.co/ZpRsPFRL/trello-clone-pricing.png)
+- Subscription plans and pricing options
+
+## Run Locally
+
+Clone the project
+
+```bash
+git clone https://github.com/Mshandev/Trello-Clone.git
+```
+
+Go to the project directory
+
+```bash
+cd trello-clone
+```
+
+Install dependencies
+
+```bash
+npm install
+```
+
+Setup Environment Variables
+
+Create a `.env` file in the root folder and add the following variables:
+
+```env
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+
+# Supabase Database
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+Start the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Frontend
+- **[Next.js 15](https://nextjs.org/)** - React framework with App Router
+- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
+- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
+- **[Shadcn UI](https://ui.shadcn.com/)** - Beautiful, accessible components
+- **[Lucide React](https://lucide.dev/)** - Icon library
 
-## Learn More
+### Backend & Database
+- **[Supabase](https://supabase.com/)** - Backend-as-a-Service with PostgreSQL
+- **[Clerk](https://clerk.com/)** - Authentication and user management
 
-To learn more about Next.js, take a look at the following resources:
+### Drag & Drop
+- **[@dnd-kit](https://dndkit.com/)** - Modern drag-and-drop toolkit for React
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Development Tools
+- **[ESLint](https://eslint.org/)** - Code linting
+- **[PostCSS](https://postcss.org/)** - CSS processing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+The application is deployed on Vercel.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Contributions are always welcome!
+Just raise an issue, and we will discuss it.
+
+## Feedback
+
+If you have any feedback, please reach out to me [here](https://www.linkedin.com/in/muhammad-shan-full-stack-developer/)
