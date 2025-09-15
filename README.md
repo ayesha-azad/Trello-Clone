@@ -4,7 +4,7 @@ A modern project management tool inspired by Trello, built with Next.js, Supabas
 
 ## Demo
 
-- Live Preview: [https://trello-clone-by-shan.vercel.app]
+- Live Preview: https://trello-clone-by-shan.vercel.app
 
 ## Features
 
@@ -37,9 +37,6 @@ A modern project management tool inspired by Trello, built with Next.js, Supabas
 
 ![Home](https://i.ibb.co/b5HDBpvn/trello-clone-home.png)
 - Modern landing page with feature highlights
-
-![Sign In](https://i.ibb.co/q3Bz3kZr/trello-clone-login.png)
-- Secure sign-in interface with Clerk
 
 ![Sign Up](https://i.ibb.co/HTGNY3gj/trello-clone-signup.png)
 - User registration with Clerk
