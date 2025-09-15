@@ -5,7 +5,7 @@ import Pricing from "./Pricing";
 import CallToAction from "./CallToAction";
 import Footer from "@/components/layout/Footer";
 
-export default function Home() {
+export default function HomePagePartial() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navbar />
