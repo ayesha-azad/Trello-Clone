@@ -1,12 +1,10 @@
 services:
   trello-nextapp:
-    build:
-      context: .
-    container_name: trello-nextapp
+    image: ayeshaazad/trello-nextapp
     environment:
-      CLERK_SECRET_KEY: ${{secrets.CLERK_SECRET_KEY}}
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY}}
-      NEXT_PUBLIC_SUPABASE_URL: ${{secrets.NEXT_PUBLIC_SUPABASE_URL}}
+      CLERK_SECRET_KEY: ${clerk-secret-key}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${next-public-clerk-publishable-key}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${next-public-supabase-anon-key}
+      NEXT_PUBLIC_SUPABASE_URL: ${next-public-supabase-url}
     ports:
       - "3000:3000"
