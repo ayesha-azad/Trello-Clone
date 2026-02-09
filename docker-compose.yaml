@@ -7,4 +7,4 @@ services:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${next-public-supabase-anon-key}
       NEXT_PUBLIC_SUPABASE_URL: ${next-public-supabase-url}
     ports:
-      - "3000:3000"
+      - "3050:3000"
