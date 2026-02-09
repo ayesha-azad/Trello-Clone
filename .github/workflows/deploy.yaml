@@ -13,7 +13,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Node Setup
+      - name: Node JS Setup
         uses: actions/setup-node@v5
         with:
           node-version: "20"
