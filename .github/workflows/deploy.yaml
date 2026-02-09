@@ -1,7 +1,9 @@
 name: Deployment for Trello Project
 
 on: 
-  push:
+  push: 
+    branches:
+      - main 
   pull_request:
 
 jobs:
@@ -38,3 +40,4 @@ jobs:
       - name: Running Build
         run: npm run build
         
+
