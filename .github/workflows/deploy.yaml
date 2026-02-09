@@ -1,9 +1,9 @@
 name: Deployment for Trello Project
 
-on: 
-  push: 
+on:
+  push:
     branches:
-      - main 
+      - main
   pull_request:
 
 jobs:
@@ -16,28 +16,25 @@ jobs:
       - name: Node Setup
         uses: actions/setup-node@v5
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Installing Dependencies
         run: npm ci
 
-      - name: Docker build 
+      - name: Docker build
         run: docker compose build
-
-      - name: Docker login
-        run: echo ${{secrets.DOCKER_PAT}} | docker login --username ayeshaazad --password-stdin
-        working-directory: ${{github.workspace}}
-        env: 
+        env:
           clerk-secret-key: ${{secrets.CLERK_SECRET_KEY}}
           next-public-clerk-publishable-key: ${{secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}}
           next-public-supabase-anon-key: ${{secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY}}
           next-public-supabase-url: ${{secrets.NEXT_PUBLIC_SUPABASE_URL}}
+
+      - name: Docker login
+        run: echo ${{secrets.DOCKER_PAT}} | docker login --username ayeshaazad --password-stdin
 
       - name: Docker Push
         run: docker compose push
 
       - name: Running Build
         run: npm run build
-        
-
